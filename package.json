@@ -1,0 +1,29 @@
+{
+  "name": "panel-social-livo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Dashboard analítico de redes sociales para LIVO / LentesPlus",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "consolidate": "python3 scripts/consolidate.py"
+  },
+  "dependencies": {
+    "localforage": "^1.10.0",
+    "papaparse": "^5.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^15.0.0",
+    "react-router-dom": "^6.24.0",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.1"
+  }
+}

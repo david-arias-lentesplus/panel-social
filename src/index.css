@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── LIVO custom font fallbacks ───────────────────────────────── */
+/* Ballinger y T29 Carbon no son Google Fonts; usar Poppins Bold   */
+/* como display hasta que el equipo suba los archivos de fuente.   */
+@layer base {
+  :root {
+    --color-blue:   #0000E1;
+    --color-lime:   #DEFF00;
+    --color-orange: #FC4F00;
+    --color-pink:   #D92D8E;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #F0F0F0;
+    color: #111;
+  }
+
+  /* Scrollbar sutil */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CCC; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #AAA; }
+}
+
+@layer components {
+  /* Animación de carga */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200;
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
