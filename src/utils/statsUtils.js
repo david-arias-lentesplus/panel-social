@@ -199,11 +199,12 @@ export function analyzeContentRow(row) {
   const id           = g('identificador de la publicación') || g('identificador') || ''
   const horaRaw      = g('hora de publicación') || g('hora') || g('fecha')
   const descripcion  = g('descripción') || g('descripcion') || '—'
+  const usuario      = g('nombre de usuario') || g('usuario') || ''
 
   const fechaObj = parseHora(horaRaw)
 
   return {
-    id, tipo, horaRaw, fechaObj,
+    id, tipo, horaRaw, fechaObj, usuario,
     descripcion: String(descripcion).slice(0, 120),
     alcance, interacciones,
     er: calcER(interacciones, alcance),

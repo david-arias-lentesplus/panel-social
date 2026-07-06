@@ -5,7 +5,7 @@
 import DateRangePicker from '../ui/DateRangePicker'
 import Spinner from '../ui/Spinner'
 
-export default function GlobalBar({ dateRange, setPreset, setCustomRange, toggleCompare, loading }) {
+export default function GlobalBar({ dateRange, setPreset, setCustomRange, toggleCompare, loading, accountFilter, setAccountFilter }) {
   function handleExport() {
     // TODO: integrar librería de PDF (jsPDF + html2canvas) en iteración futura
     alert('Exportación a PDF próximamente 📄')
@@ -23,8 +23,29 @@ export default function GlobalBar({ dateRange, setPreset, setCustomRange, toggle
         )}
       </div>
 
-      {/* Right: date picker + export */}
+      {/* Right: filtro de cuenta + date picker + export */}
       <div className="flex items-center gap-2">
+        {setAccountFilter && (
+          <div className="flex items-center rounded-input border-[1.5px] border-[#DDD] overflow-hidden h-9" title="Filtrar publicaciones por cuenta">
+            <button
+              onClick={() => setAccountFilter('todas')}
+              className={`h-full px-3 text-xs font-bold tracking-[0.3px] transition-all ${
+                accountFilter === 'todas' ? 'bg-[#0000E1] text-white' : 'bg-white text-[#666] hover:text-[#0000E1]'
+              }`}
+            >
+              Todas
+            </button>
+            <button
+              onClick={() => setAccountFilter('propia')}
+              className={`h-full px-3 text-xs font-bold tracking-[0.3px] transition-all border-l-[1.5px] border-[#DDD] ${
+                accountFilter === 'propia' ? 'bg-[#0000E1] text-white' : 'bg-white text-[#666] hover:text-[#0000E1]'
+              }`}
+            >
+              Solo propia
+            </button>
+          </div>
+        )}
+
         <DateRangePicker
           dateRange={dateRange}
           setPreset={setPreset}

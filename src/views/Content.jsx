@@ -11,6 +11,7 @@ import Pagination from '../components/ui/Pagination'
 import { useLocalData } from '../hooks/useLocalData'
 import { parseMetaNumber } from '../utils/audienceParser'
 import { formatNumber, calcER } from '../utils/dateUtils'
+import { detectOwnAccount, filterByAccount } from '../utils/accountFilter'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ const PAGE_SIZE = 10
 // ── Vista ─────────────────────────────────────────────────────────────────────
 
 export default function Content({ dateProps }) {
-  const { dateRange } = dateProps ?? {}
+  const { dateRange, accountFilter = 'todas' } = dateProps ?? {}
   const { rows }         = useLocalData('contenido')
   const { rows: paidRaw } = useLocalData('anuncios')
 
@@ -173,8 +174,19 @@ export default function Content({ dateProps }) {
     return normalized.filter(r => r.dateObj && r.dateObj >= start && r.dateObj <= end)
   }, [normalized, dateRange])
 
+  // Cuenta propia detectada automáticamente (moda de `usuario` sobre todo el dataset,
+  // no solo el rango de fechas, para que la detección sea estable)
+  const ownAccount = useMemo(() => detectOwnAccount(normalized), [normalized])
+
+  // Filtro de cuenta: todas las publicaciones vs. solo cuenta propia (sin collabs/externas)
+  const accountFiltered = useMemo(
+    () => filterByAccount(dateFiltered, accountFilter, ownAccount),
+    [dateFiltered, accountFilter, ownAccount]
+  )
+  const hiddenByAccountFilter = dateFiltered.length - accountFiltered.length
+
   // Enriquecer con datos de pauta
-  const enriched = useMemo(() => dateFiltered.map(r => {
+  const enriched = useMemo(() => accountFiltered.map(r => {
     const paid = paidMap[r.id] ?? null
     return {
       ...r,
@@ -185,7 +197,7 @@ export default function Content({ dateProps }) {
       vistasOrganicas:    r.vistas - (paid?.vistasPagadas ?? 0),
       seguidoresPagados:  paid?.seguidoresPagados ?? 0,
     }
-  }), [dateFiltered, paidMap])
+  }), [accountFiltered, paidMap])
 
   const tipos = useMemo(() => ['Todos', ...new Set(enriched.map(r => r.tipo))], [enriched])
   const hasPaidData = enriched.some(r => r.hasPauta)
@@ -232,7 +244,11 @@ export default function Content({ dateProps }) {
     <div className="flex flex-col h-full">
       <Header
         title="Contenido"
-        subtitle={`${formatNumber(enriched.length)} publicaciones · ${enriched.filter(r=>r.hasPauta).length} con pauta`}
+        subtitle={`${formatNumber(enriched.length)} publicaciones · ${enriched.filter(r=>r.hasPauta).length} con pauta${
+          accountFilter === 'propia' && hiddenByAccountFilter > 0
+            ? ` · ${hiddenByAccountFilter} collab/externas ocultas`
+            : ''
+        }`}
       />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-5">

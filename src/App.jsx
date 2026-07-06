@@ -13,6 +13,7 @@ import DataSourceManager from './components/DataManager/DataSourceManager'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useDataSources } from './hooks/useDataSources'
 import { useDateRange } from './hooks/useDateRange'
+import { useAccountFilter } from './hooks/useAccountFilter'
 
 import Overview      from './views/Overview'
 import Content       from './views/Content'
@@ -23,9 +24,10 @@ import DataIngestion from './views/DataIngestion'
 export default function App() {
   const dataSources = useDataSources()
   const { dateRange, setPreset, setCustomRange, toggleCompare, monthSpan, filterByDate } = useDateRange()
+  const { accountFilter, setAccountFilter, toggleAccountFilter } = useAccountFilter()
   const [dmOpen, setDmOpen] = useState(false)
 
-  const dateProps = { dateRange, monthSpan, filterByDate }
+  const dateProps = { dateRange, monthSpan, filterByDate, accountFilter }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F0F0F0]">
@@ -37,6 +39,9 @@ export default function App() {
           setPreset={setPreset}
           setCustomRange={setCustomRange}
           toggleCompare={toggleCompare}
+          accountFilter={accountFilter}
+          setAccountFilter={setAccountFilter}
+          toggleAccountFilter={toggleAccountFilter}
         />
 
         <div className="flex-1 overflow-hidden">

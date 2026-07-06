@@ -13,6 +13,7 @@ import Badge from '../components/ui/Badge'
 import { useLocalData } from '../hooks/useLocalData'
 import { parseMetaNumber } from '../utils/audienceParser'
 import { formatNumber, calcER } from '../utils/dateUtils'
+import { detectOwnAccount, filterByAccount } from '../utils/accountFilter'
 import {
   paretoAnalysis,
   detectOutliers,
@@ -46,16 +47,23 @@ function SectionTitle({ children }) {
 }
 
 export default function Analysis({ dateProps }) {
-  const { dateRange } = dateProps ?? {}
+  const { dateRange, accountFilter = 'todas' } = dateProps ?? {}
   const { rows: rawRows, loading, source } = useLocalData('contenido')
 
-  // Normalizar y filtrar por fecha
+  // Normalizar (todo el dataset, sin filtrar aún) — se usa para detectar la cuenta propia
+  const allNormalized = useMemo(
+    () => rawRows.map(analyzeContentRow).filter(r => r.alcance > 0 || r.interacciones > 0),
+    [rawRows]
+  )
+  const ownAccount = useMemo(() => detectOwnAccount(allNormalized), [allNormalized])
+
+  // Normalizar, filtrar por cuenta y por fecha
   const rows = useMemo(() => {
-    const normalized = rawRows.map(analyzeContentRow).filter(r => r.alcance > 0 || r.interacciones > 0)
+    const accountFiltered = filterByAccount(allNormalized, accountFilter, ownAccount)
     const { start, end } = dateRange ?? {}
-    if (!start || !end) return normalized
-    return normalized.filter(r => r.fechaObj && r.fechaObj >= start && r.fechaObj <= end)
-  }, [rawRows, dateRange])
+    if (!start || !end) return accountFiltered
+    return accountFiltered.filter(r => r.fechaObj && r.fechaObj >= start && r.fechaObj <= end)
+  }, [allNormalized, accountFilter, ownAccount, dateRange])
 
   // ── Módulo 1: Heatmap ───────────────────────────────────────────────────────
   const heatmapGrid = useMemo(() => buildHeatmapGrid(rows), [rows])
