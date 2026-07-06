@@ -11,6 +11,8 @@ import Card from '../components/ui/Card'
 import { parseMetaNumber } from '../utils/audienceParser'
 import { formatNumber, calcER, monthKey, monthLabel } from '../utils/dateUtils'
 import { useLocalData } from '../hooks/useLocalData'
+import { detectOwnAccount, buildExternalDailyDeltas, isoDay } from '../utils/accountFilter'
+import { analyzeContentRow } from '../utils/statsUtils'
 
 function normalizeRow(row) {
   const h = Object.keys(row)
@@ -86,8 +88,19 @@ function MonthComparisonChart({ data, metric, label, color }) {
 }
 
 export default function Overview({ dateProps }) {
-  const { dateRange, monthSpan } = dateProps ?? {}
+  const { dateRange, monthSpan, accountFilter = 'todas' } = dateProps ?? {}
   const { rows, loading, source } = useLocalData('resultados')
+
+  // Contenido por publicación: solo se usa para detectar collabs/externas y
+  // poder descontar su aporte diario de Alcance/Interacciones/Visualizaciones,
+  // ya que "resultados.csv" es un agregado diario sin desglose por cuenta.
+  const { rows: contentRaw } = useLocalData('contenido')
+  const contentNormalized = useMemo(() => contentRaw.map(analyzeContentRow), [contentRaw])
+  const ownAccount = useMemo(() => detectOwnAccount(contentNormalized), [contentNormalized])
+  const externalDeltas = useMemo(
+    () => buildExternalDailyDeltas(contentNormalized, ownAccount),
+    [contentNormalized, ownAccount]
+  )
 
   const allData = useMemo(
     () => rows.map(normalizeRow).filter(r => r.fecha !== '—'),
@@ -95,11 +108,40 @@ export default function Overview({ dateProps }) {
   )
 
   // Filtrar por rango de fecha
-  const data = useMemo(() => {
+  const dateFiltered = useMemo(() => {
     const { start, end } = dateRange ?? {}
     if (!start || !end) return allData
     return allData.filter(r => r.dateObj && r.dateObj >= start && r.dateObj <= end)
   }, [allData, dateRange])
+
+  // Si el filtro de cuenta es "propia", descontar por día el aporte de las
+  // publicaciones de cuentas externas/collabs en Alcance, Interacciones y
+  // Visualizaciones (Visitas/Clics/Seguidores no se pueden atribuir a una
+  // publicación puntual en este dataset, así que no cambian).
+  const data = useMemo(() => {
+    if (accountFilter !== 'propia') return dateFiltered
+    return dateFiltered.map(r => {
+      const key = r.dateObj ? isoDay(r.dateObj) : null
+      const delta = key ? externalDeltas[key] : null
+      if (!delta) return r
+      return {
+        ...r,
+        alcance:         Math.max(0, r.alcance - delta.alcance),
+        interacciones:   Math.max(0, r.interacciones - delta.interacciones),
+        visualizaciones: Math.max(0, r.visualizaciones - delta.vistas),
+      }
+    })
+  }, [dateFiltered, accountFilter, externalDeltas])
+
+  const hiddenPosts = useMemo(() => {
+    if (accountFilter !== 'propia') return 0
+    const { start, end } = dateRange ?? {}
+    return contentNormalized.filter(r => {
+      if (!r.usuario || r.usuario === ownAccount) return false
+      if (!start || !end) return true
+      return r.fechaObj && r.fechaObj >= start && r.fechaObj <= end
+    }).length
+  }, [contentNormalized, ownAccount, accountFilter, dateRange])
 
   // KPIs = TOTALES del periodo seleccionado
   const totals = useMemo(() => {
@@ -124,7 +166,11 @@ export default function Overview({ dateProps }) {
     <div className="flex flex-col h-full">
       <Header
         title="Visión General"
-        subtitle={`${formatNumber(data.length)} días de datos${source === "indexeddb" ? " — datos locales" : ""}`}
+        subtitle={`${formatNumber(data.length)} días de datos${source === "indexeddb" ? " — datos locales" : ""}${
+          accountFilter === 'propia' && hiddenPosts > 0
+            ? ` · Alcance/Interacc./Visualiz. ajustados sin ${hiddenPosts} collab/externas`
+            : ''
+        }`}
         loading={loading}
         onRefresh={null}
       />

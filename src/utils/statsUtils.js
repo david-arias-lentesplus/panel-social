@@ -195,6 +195,7 @@ export function analyzeContentRow(row) {
   const guardados    = parseMetaNumber(g('guardó') || g('guardados'))
   const seguimientos = parseMetaNumber(g('seguimiento'))
   const alcance      = parseMetaNumber(g('alcance'))
+  const vistas       = parseMetaNumber(g('visualizaciones') || g('vistas'))
   const interacciones = me_gusta + comentarios + compartidos + guardados + seguimientos
   const id           = g('identificador de la publicación') || g('identificador') || ''
   const horaRaw      = g('hora de publicación') || g('hora') || g('fecha')
@@ -206,7 +207,7 @@ export function analyzeContentRow(row) {
   return {
     id, tipo, horaRaw, fechaObj, usuario,
     descripcion: String(descripcion).slice(0, 120),
-    alcance, interacciones,
+    alcance, vistas, interacciones,
     er: calcER(interacciones, alcance),
   }
 }
